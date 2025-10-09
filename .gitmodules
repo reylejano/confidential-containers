@@ -1,3 +1,0 @@
-[submodule "operator"]
-	path = operator
-	url = https://github.com/confidential-containers/operator
