@@ -78,7 +78,7 @@ ccr_installed() {
 install_ccr() {
 	gum spin --title "Installing Confidential Containers Runtime..." -- sleep 2
 	kubectl apply -f /workspaces/confidential-containers/coco-config/ccruntime-sample.yaml --wait
-	while ! quiet_exec kubectl diff -f /workspace/confidential-containers/coco-config/ccruntime-sample.yaml; do
+	while ! quiet_exec kubectl diff -f /workspaces/confidential-containers/coco-config/ccruntime-sample.yaml; do
 		gum spin --title "Waiting for kata-qemu-coco-dev runtimeclass to be created..." -- sleep 5
 	done
 	gum spin --title "kata-qemu-coco-dev runtimeclass created!" -- sleep 2
