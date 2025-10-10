@@ -7,7 +7,7 @@
 		"ghcr.io/devcontainers/features/kubectl-helm-minikube:1": {},
 		"ghcr.io/devcontainers-extra/features/kind:1": {},
 		"ghcr.io/rio/features/k9s:1": {}
-	},
+	}
 	
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	//"forwardPorts": [],
@@ -16,7 +16,7 @@
 	//"postCreateCommand": "",
 
 	// Use 'postStartCommand' to run commands after the container is created like starting minikube.
-	"postStartCommand": "kind create cluster --config kind-config.yaml"
+	//"postStartCommand": ""
 
 	// Configure tool-specific properties.
 	//"customizations": {},
