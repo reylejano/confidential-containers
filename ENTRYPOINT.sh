@@ -75,7 +75,7 @@ coco_demo_01() {
 
 install_coco_demo_01() {
 	gum spin --title "Testing Confidential Containers Runtime..." -- \
-		bash -c "kubectl create -f coco-demo-01.yaml --wait"
+		bash -c "kubectl apply -f coco-demo-01.yaml --wait"
 }
 
 coco_demo_02() {
@@ -85,7 +85,7 @@ coco_demo_02() {
 
 install_coco_demo_02() {
 	gum spin --title "Testing Confidential Containers Runtime With Policy..." -- \
-		bash -c "kubectl create -f coco-demo-02.yaml --wait"
+		bash -c "kubectl apply -f coco-demo-02.yaml --wait"
 }
 
 show_menu() {
@@ -95,8 +95,8 @@ show_menu() {
 		Install Operator Lifecycle Manager,$( olm_installed )
 		Install Confidential Containers Operator,$( coco_installed )
 		Install Confidential Container Runtime,$( ccr_installed )
-		Test1,$( coco_demo_01 )
-		Test2,$( coco_demo_02 )
+		CoCo Demo 01,$( coco_demo_01 )
+		CoCo Demo 02,$( coco_demo_02 )
 		-----------------------------------------------,--
 		Run K9S,$(echo ':dog:' | gum format -t emoji)
 		Clean Up Cluster,$(echo ':wastebasket:' | gum format -t emoji)
@@ -144,14 +144,14 @@ main() {
 					install_ccr
 				fi
 				;;
-			Test1)
+			CoCo\ Demo\ 01)
 				if quiet_exec coco_demo_01; then
 					gum spin --title "Demo 01 is already installed." -- sleep 2
 				else
 					install_coco_demo_01
 				fi
 				;;
-			Test2)
+			CoCo\ Demo\ 02)
 				if quiet_exec coco_demo_02; then
 					gum spin --title "Demo 02 is already installed." -- sleep 2
 				else
