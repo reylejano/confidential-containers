@@ -29,7 +29,7 @@ kind_cluster_installed() {
 
 install_kind() {
 	gum spin --title "Installing Kind Cluster..." -- sleep 2
-	kind create cluster --config kind-config.yaml | gum pager
+	kind create cluster --config /workspaces/confidential-containers/cluster-config/kind-config.yaml | gum pager
 	clear
 }
 
@@ -41,15 +41,15 @@ destroy_kind() {
 
 olm_installed() {
 	quiet_exec kubectl cluster-info && \
-	quiet_exec kubectl get -f https://raw.githubusercontent.com/operator-framework/operator-lifecycle-manager/master/deploy/upstream/quickstart/crds.yaml && \
-	quiet_exec kubectl get -f https://raw.githubusercontent.com/operator-framework/operator-lifecycle-manager/master/deploy/upstream/quickstart/olm.yaml
+	quiet_exec kubectl get -f /workspaces/confidential-containers/cluster-config/crds.yaml && \
+	quiet_exec kubectl get -f /workspaces/confidential-containers/cluster-config/olm.yaml
 	validate_command $?
 }
 
 install_olm() {
 	gum spin --title "Installing Operator Lifecycle Manager..." -- sleep 2
-	kubectl apply -f https://raw.githubusercontent.com/operator-framework/operator-lifecycle-manager/master/deploy/upstream/quickstart/crds.yaml --wait
-	kubectl apply -f https://raw.githubusercontent.com/operator-framework/operator-lifecycle-manager/master/deploy/upstream/quickstart/olm.yaml --wait
+	kubectl apply -f /workspaces/confidential-containers/cluster-config/crds.yaml --wait
+	kubectl apply -f /workspaces/confidential-containers/cluster-config/olm.yaml --wait
 	clear
 }
 
@@ -60,7 +60,7 @@ coco_installed() {
 
 install_coco_operator() {
 	gum spin --title "Installing Confidential Containers Operator..." -- sleep 2
-	kubectl apply -f coco-operator.yaml --wait
+	kubectl apply -f /workspaces/confidential-containers/coco-config/coco-operator.yaml --wait
 	while ! quiet_exec kubectl get deployment cc-operator-controller-manager -n confidential-containers-system; do
 		gum spin --title "Waiting for coco-operator deployment to be created..." -- sleep 5
 	done
@@ -77,8 +77,8 @@ ccr_installed() {
 
 install_ccr() {
 	gum spin --title "Installing Confidential Containers Runtime..." -- sleep 2
-	kubectl apply -k github.com/confidential-containers/operator/config/samples/ccruntime/default?ref=v0.14.0 --wait
-	while ! quiet_exec kubectl diff -f kata-runtimeclass.yaml; do
+	kubectl apply -f /workspace/confidential-containers/coco-config/ccruntime-sample.yaml --wait
+	while ! quiet_exec kubectl diff -f /workspace/confidential-containers/coco-config/ccruntime-sample.yaml; do
 		gum spin --title "Waiting for kata-qemu-coco-dev runtimeclass to be created..." -- sleep 5
 	done
 	gum spin --title "kata-qemu-coco-dev runtimeclass created!" -- sleep 2
@@ -91,10 +91,8 @@ coco_demo_01() {
 }
 
 install_coco_demo_01() {
-	gum spin --title "Checking ContainerD" -- \
-		bash -c "docker exec coco-test-control-plane bash -c 'systemctl restart containerd'"
 	gum spin --show-output --title "Testing Confidential Containers Runtime..." -- \
-		bash -c "kubectl create -f coco-demo-01.yaml"
+		bash -c "kubectl create -f /workspace/confidential-containers/demo-pods/coco-demo-01.yaml"
 	gum spin --title "Waiting for coco-demo-01 to be running..." --timeout 60s -- \
 		bash -c "kubectl wait --for=condition=Ready --timeout=120s pod/coco-demo-01 -n default"
 	clear
@@ -106,10 +104,8 @@ coco_demo_02() {
 }
 
 install_coco_demo_02() {
-	gum spin --title "Checking ContainerD" -- \
-		bash -c "docker exec coco-test-control-plane bash -c 'systemctl restart containerd'"
 	gum spin --show-output --title "Testing Confidential Containers Runtime With Policy..." -- \
-		bash -c "kubectl create -f coco-demo-02.yaml"
+		bash -c "kubectl create -f /workspace/confidential-containers/demo-pods/coco-demo-02.yaml"
 	gum spin --title "Waiting for coco-demo-02 to be running..." --timeout 60s -- \
 		bash -c "kubectl wait --for=condition=Ready --timeout=120s pod/coco-demo-02 -n default"
 	clear
@@ -122,7 +118,7 @@ trustee_operator_installed() {
 
 install_trustee_operator() {
 	gum spin --title "Installing Trustee Operator..." -- sleep 2
-	kubectl apply -f trustee-operator.yaml --wait
+	kubectl apply -f /workspace/confidential-containers/trustee-config/trustee-operator.yaml --wait
 	while ! quiet_exec kubectl get deployment trustee-operator-controller-manager -n trustee-system; do
 		gum spin --title "Waiting for trustee-operator deployment to be created..." -- sleep 5
 	done
@@ -132,22 +128,70 @@ install_trustee_operator() {
 }
 
 trustee_instance_installed() {
-	quiet_exec kubectl get kbsconfig kbsconfig-sample -n trustee-system
+	quiet_exec kubectl get deployment trustee-deployment -n trustee-system
 	validate_command $?
 }
 
 install_trustee_instance() {
 	gum spin --title "Installing Trustee Instance..." -- sleep 2
-	SECRET=$(openssl genpkey -algorithm ed25519)
-	
-	kubectl create secret -n trustee-system generic kbs-auth-public-key --from-literal=kbs.pem="$SECRET"
-	kubectl apply -f kbs-configmap.yaml
-	kubectl apply -f rvps-reference-values-configmap.yaml
-	kubectl apply -f kbsconfig-sample.yaml
-	while ! quiet_exec kubectl get kbsconfig kbsconfig-sample -n trustee-system; do
-		gum spin --title "Waiting for kbsconfig-sample to be created..." -- sleep 5
-	done
-	gum spin --title "kbsconfig-sample created!" -- sleep 2
+	kubectl create secret -n trustee-system generic kbs-auth-public-key --from-literal=kbs.pem="$(openssl genpkey -algorithm ed25519)"
+	kubectl get secret -n trustee-system kbs-auth-public-key -o go-template='{{index .data "kbs.pem"}}' | base64 -d > /tmp/kbs.pem
+	kubectl apply -f /workspaces/confidential-containers/trustee-config/kbs-configmap.yaml
+	kubectl apply -f /workspaces/confidential-containers/trustee-config/rvps-reference-values-configmap.yaml
+	kubectl apply -f /workspaces/confidential-containers/trustee-config/kbsconfig-sample.yaml
+	while ! quiet_exec kubectl get deployment trustee-deployment -n trustee-system; do
+		gum spin --title "Waiting for trustee-operator deployment to be created..." -- sleep 5
+	done	
+	gum spin --title "KBS created!" -- sleep 2
+	gum spin --title "Waiting for trustee-operator to be ready..." -- \
+		bash -c "kubectl wait --for=condition=Available --timeout=120s deployment/trustee-operator-controller-manager -n trustee-system"
+	clear
+}
+
+coco_demo_03() {
+	quiet_exec kubectl get pod coco-demo-03 -n default
+	validate_command $?
+}
+
+install_coco_demo_03() {
+	export KBS_HOST=$(kubectl get nodes -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}' -n trustee-system)
+	export KBS_PORT=$(kubectl get svc kbs-service -o jsonpath='{.spec.ports[0].nodePort}' -n trustee-system)
+	envsubst < /workspace/confidential-containers/demo-pods/coco-demo-03.yaml | kubectl create -f -
+	gum spin --title "Waiting for coco-demo-03 to be running..." --timeout 60s -- \
+		bash -c "kubectl wait --for=condition=Ready --timeout=120s pod/coco-demo-03 -n default"
+	clear
+}
+
+coco_demo_04() {
+	quiet_exec kubectl get pod coco-demo-04 -n default
+	validate_command $?
+}
+
+install_coco_demo_04() {
+	export KBS_HOST=$(kubectl get nodes -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}' -n trustee-system)
+	export KBS_PORT=$(kubectl get svc kbs-service -o jsonpath='{.spec.ports[0].nodePort}' -n trustee-system)
+	export KBS_PRIVATE_KEY="/tmp/kbs.pem"
+	gum input --placeholder "Super Secret Value" > /tmp/secret.txt
+	kbs-client --url "http://$KBS_HOST:$KBS_PORT" config --auth-private-key "$KBS_PRIVATE_KEY" set-resource --path default/secret/1 --resource-file /tmp/secret.txt
+	envsubst < /workspaces/confidential-containers/demo-pods/coco-demo-04.yaml | kubectl create -f -
+	gum spin --title "Waiting for coco-demo-04 to be running..." --timeout 60s -- \
+		bash -c "kubectl wait --for=condition=Ready --timeout=120s pod/coco-demo-04 -n default"
+	clear
+}
+
+coco_demo_05() {
+	quiet_exec kubectl get pod coco-demo-05 -n default
+	validate_command $?
+}
+
+install_coco_demo_05() {
+	export KBS_HOST=$(kubectl get nodes -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}' -n trustee-system)
+	export KBS_PORT=$(kubectl get svc kbs-service -o jsonpath='{.spec.ports[0].nodePort}' -n trustee-system)
+	export KBS_PRIVATE_KEY="/tmp/kbs.pem"
+	kbs-client --url "http://$KBS_HOST:$KBS_PORT" config --auth-private-key "$KBS_PRIVATE_KEY" set-resource-policy --policy-file /workspaces/confidential-containers/trustee-config/resources_policy.rego
+	envsubst < /workspaces/confidential-containers/demo-pods/coco-demo-05.yaml | kubectl create -f -
+	gum spin --title "Waiting for coco-demo-05 to be running..." --timeout 60s -- \
+		bash -c "kubectl wait --for=condition=Ready --timeout=120s pod/coco-demo-05 -n default"
 	clear
 }
 
@@ -165,7 +209,11 @@ show_menu() {
 		Test Runtime With Policy,$( coco_demo_02 )
 		Install Trustee Operator,$( trustee_operator_installed )
 		Install Trustee Instance,$( trustee_instance_installed )
+		Test Trustee Connection,$( coco_demo_03 )
+		Test Trustee Secret,$( coco_demo_04 )
+		Test Trustee Secret Policy,$( coco_demo_05 )
 		------------------------------------------,--
+		Restart ContainerD,$(echo ':wrench:' | gum format -t emoji)
 		Run K9S,$(echo ':dog:' | gum format -t emoji)
 		Clean Up Cluster,$(echo ':wastebasket:' | gum format -t emoji)
 		Finish,$(echo ':checkered_flag:' | gum format -t emoji)
@@ -257,6 +305,34 @@ main() {
 					print_banner
 				fi
 				;;
+			Test\ Trustee\ Connection)
+				if quiet_exec coco_demo_03; then
+					gum spin --title "Demo 03 is already installed." -- sleep 2
+				else
+					install_coco_demo_03
+					print_banner
+				fi
+				;;
+			Test\ Trustee\ Secret)
+				if quiet_exec coco_demo_04; then
+					gum spin --title "Demo 04 is already installed." -- sleep 2
+				else
+					install_coco_demo_04
+					print_banner
+				fi
+				;;
+			Test\ Trustee\ Secret\ Policy)
+				if quiet_exec coco_demo_05; then
+					gum spin --title "Demo 05 is already installed." -- sleep 2
+				else
+					install_coco_demo_05
+					print_banner
+				fi
+				;;
+			Restart\ ContainerD)
+				gum spin --title "Restarting ContainerD..." -- sleep 2
+				docker exec -it coco-test-control-plane bash -c "systemctl restart containerd"
+				print_banner
 			Run\ K9S)
 				k9s
 				print_banner

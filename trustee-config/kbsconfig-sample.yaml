@@ -11,6 +11,8 @@ metadata:
   name: kbsconfig-sample
   namespace: trustee-system
 spec:
+  KbsEnvVars:
+    RUST_LOG: debug
   kbsConfigMapName: kbs-config
   kbsAuthSecretName: kbs-auth-public-key
   kbsDeploymentType: AllInOneDeployment
