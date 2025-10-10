@@ -17,7 +17,7 @@
 	"postCreateCommand": "./install.sh",
 
 	// Use 'postStartCommand' to run commands after the container is created like starting minikube.
-	"postStartCommand": "./ENTRYPOINT.sh"
+	"postStartCommand": "./entrypoint.sh",
 
 	// Configure tool-specific properties.
 	//"customizations": {},
