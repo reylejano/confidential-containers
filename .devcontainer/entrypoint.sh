@@ -77,7 +77,7 @@ ccr_installed() {
 
 install_ccr() {
 	gum spin --title "Installing Confidential Containers Runtime..." -- sleep 2
-	kubectl apply -f /workspace/confidential-containers/coco-config/ccruntime-sample.yaml --wait
+	kubectl apply -f /workspaces/confidential-containers/coco-config/ccruntime-sample.yaml --wait
 	while ! quiet_exec kubectl diff -f /workspace/confidential-containers/coco-config/ccruntime-sample.yaml; do
 		gum spin --title "Waiting for kata-qemu-coco-dev runtimeclass to be created..." -- sleep 5
 	done
@@ -92,7 +92,7 @@ coco_demo_01() {
 
 install_coco_demo_01() {
 	gum spin --show-output --title "Testing Confidential Containers Runtime..." -- \
-		bash -c "kubectl create -f /workspace/confidential-containers/demo-pods/coco-demo-01.yaml"
+		bash -c "kubectl create -f /workspaces/confidential-containers/demo-pods/coco-demo-01.yaml"
 	gum spin --title "Waiting for coco-demo-01 to be running..." --timeout 60s -- \
 		bash -c "kubectl wait --for=condition=Ready --timeout=120s pod/coco-demo-01 -n default"
 	clear
@@ -105,7 +105,7 @@ coco_demo_02() {
 
 install_coco_demo_02() {
 	gum spin --show-output --title "Testing Confidential Containers Runtime With Policy..." -- \
-		bash -c "kubectl create -f /workspace/confidential-containers/demo-pods/coco-demo-02.yaml"
+		bash -c "kubectl create -f /workspaces/confidential-containers/demo-pods/coco-demo-02.yaml"
 	gum spin --title "Waiting for coco-demo-02 to be running..." --timeout 60s -- \
 		bash -c "kubectl wait --for=condition=Ready --timeout=120s pod/coco-demo-02 -n default"
 	clear
@@ -118,7 +118,7 @@ trustee_operator_installed() {
 
 install_trustee_operator() {
 	gum spin --title "Installing Trustee Operator..." -- sleep 2
-	kubectl apply -f /workspace/confidential-containers/trustee-config/trustee-operator.yaml --wait
+	kubectl apply -f /workspaces/confidential-containers/trustee-config/trustee-operator.yaml --wait
 	while ! quiet_exec kubectl get deployment trustee-operator-controller-manager -n trustee-system; do
 		gum spin --title "Waiting for trustee-operator deployment to be created..." -- sleep 5
 	done
@@ -156,7 +156,7 @@ coco_demo_03() {
 install_coco_demo_03() {
 	export KBS_HOST=$(kubectl get nodes -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}' -n trustee-system)
 	export KBS_PORT=$(kubectl get svc kbs-service -o jsonpath='{.spec.ports[0].nodePort}' -n trustee-system)
-	envsubst < /workspace/confidential-containers/demo-pods/coco-demo-03.yaml | kubectl create -f -
+	envsubst < /workspaces/confidential-containers/demo-pods/coco-demo-03.yaml | kubectl create -f -
 	gum spin --title "Waiting for coco-demo-03 to be running..." --timeout 60s -- \
 		bash -c "kubectl wait --for=condition=Ready --timeout=120s pod/coco-demo-03 -n default"
 	clear
@@ -171,8 +171,7 @@ install_coco_demo_04() {
 	export KBS_HOST=$(kubectl get nodes -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}' -n trustee-system)
 	export KBS_PORT=$(kubectl get svc kbs-service -o jsonpath='{.spec.ports[0].nodePort}' -n trustee-system)
 	export KBS_PRIVATE_KEY="/tmp/kbs.pem"
-	gum input --placeholder "Super Secret Value" > /tmp/secret.txt
-	kbs-client --url "http://$KBS_HOST:$KBS_PORT" config --auth-private-key "$KBS_PRIVATE_KEY" set-resource --path default/secret/1 --resource-file /tmp/secret.txt
+	kbs-client --url "http://$KBS_HOST:$KBS_PORT" config --auth-private-key "$KBS_PRIVATE_KEY" set-resource --path default/secret/1 --resource-file /workspaces/confidential-containers/demo-pods/secret.txt
 	envsubst < /workspaces/confidential-containers/demo-pods/coco-demo-04.yaml | kubectl create -f -
 	gum spin --title "Waiting for coco-demo-04 to be running..." --timeout 60s -- \
 		bash -c "kubectl wait --for=condition=Ready --timeout=120s pod/coco-demo-04 -n default"
@@ -241,6 +240,11 @@ main() {
 				install_ccr
 				install_coco_demo_01
 				install_coco_demo_02
+				install_trustee_operator
+				install_trustee_instance
+				install_coco_demo_03
+				install_coco_demo_04
+				install_coco_demo_05
 				print_banner
 				;;
 			Install\ Kind)
@@ -333,6 +337,7 @@ main() {
 				gum spin --title "Restarting ContainerD..." -- sleep 2
 				docker exec -it coco-test-control-plane bash -c "systemctl restart containerd"
 				print_banner
+				;;
 			Run\ K9S)
 				k9s
 				print_banner
