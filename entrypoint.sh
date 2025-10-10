@@ -115,9 +115,43 @@ install_coco_demo_02() {
 	clear
 }
 
+trustee_operator_installed() {
+	quiet_exec kubectl get deployment trustee-operator-controller-manager -n trustee-system
+	validate_command $?
+}
+
+install_trustee_operator() {
+	gum spin --title "Installing Trustee Operator..." -- sleep 2
+	kubectl apply -f trustee-operator.yaml --wait
+	while ! quiet_exec kubectl get deployment trustee-operator-controller-manager -n trustee-system; do
+		gum spin --title "Waiting for trustee-operator deployment to be created..." -- sleep 5
+	done
+	gum spin --title "Waiting for trustee-operator to be ready..." -- \
+		bash -c "kubectl wait --for=condition=Available --timeout=120s deployment/trustee-operator-controller-manager -n trustee-system"
+	clear
+}
+
+trustee_instance_installed() {
+	quiet_exec kubectl get kbsconfig kbsconfig-sample -n trustee-system
+	validate_command $?
+}
+
+install_trustee_instance() {
+	gum spin --title "Installing Trustee Instance..." -- sleep 2
+	kubectl create secret -n trustee-system generic kbs-auth-public-key --from-literal=kbs.pem="$(openssl genpkey -algorithm ed25519)"
+	kubectl apply -f https://raw.githubusercontent.com/confidential-containers/trustee-operator/refs/tags/v0.4.0/config/samples/all-in-one/kbs-config.yaml
+	kubectl apply -f https://raw.githubusercontent.com/confidential-containers/trustee-operator/refs/tags/v0.4.0/config/samples/all-in-one/rvps-reference-values.yaml
+	kubectl apply -f https://raw.githubusercontent.com/confidential-containers/trustee-operator/refs/tags/v0.4.0/config/samples/all-in-one/kbsconfig_sample.yaml
+	while ! quiet_exec kubectl get kbsconfig kbsconfig-sample -n trustee-system; do
+		gum spin --title "Waiting for kbsconfig-sample to be created..." -- sleep 5
+	done
+	gum spin --title "kbsconfig-sample created!" -- sleep 2
+	clear
+}
+
 show_menu() {
 
-	ACTION=$(gum table --border rounded --padding "1 2" --height "30" -s ',' <<- EOF
+	ACTION=$(gum table --border rounded --padding "1 2" --height "15" -s ',' <<- EOF
 		Step,Status
 		Full Send!,$(echo ':rocket:' | gum format -t emoji)
 		------------------------------------------,--
@@ -127,6 +161,8 @@ show_menu() {
 		Install Confidential Container Runtime,$( ccr_installed )
 		Test Runtime,$( coco_demo_01 )
 		Test Runtime With Policy,$( coco_demo_02 )
+		Install Trustee Operator,$( trustee_operator_installed )
+		Install Trustee Instance,$( trustee_instance_installed )
 		------------------------------------------,--
 		Run K9S,$(echo ':dog:' | gum format -t emoji)
 		Clean Up Cluster,$(echo ':wastebasket:' | gum format -t emoji)
@@ -200,6 +236,22 @@ main() {
 					gum spin --title "Demo 02 is already installed." -- sleep 2
 				else
 					install_coco_demo_02
+					print_banner
+				fi
+				;;
+			Install\ Trustee\ Operator)
+				if quiet_exec trustee_operator_installed; then
+					gum spin --title "Trustee Operator is already installed." -- sleep 2
+				else
+					install_trustee_operator
+					print_banner
+				fi
+				;;
+			Install\ Trustee\ Instance)
+				if quiet_exec trustee_instance_installed; then
+					gum spin --title "Trustee Instance is already installed." -- sleep 2
+				else
+					install_trustee_instance
 					print_banner
 				fi
 				;;
