@@ -14,10 +14,10 @@
 	//"forwardPorts": [],
 
 	// Use 'postCreateCommand' to run commands after the container is created.
-	//"postCreateCommand": "",
+	"postCreateCommand": "./install.sh",
 
 	// Use 'postStartCommand' to run commands after the container is created like starting minikube.
-	//"postStartCommand": ""
+	"postStartCommand": "./ENTRYPOINT.sh"
 
 	// Configure tool-specific properties.
 	//"customizations": {},

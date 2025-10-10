@@ -89,7 +89,7 @@ install_coco_demo_02() {
 }
 
 show_menu() {
-	ACTION=$(gum table --border rounded --padding "1 2" --height "30" <<- EOF
+	ACTION=$(gum table --border rounded --padding "1 2" --height "30" -s ',' <<- EOF
 		Step,Status
 		Install Kind,$( kind_cluster_installed )
 		Install Operator Lifecycle Manager,$( olm_installed )
@@ -107,9 +107,7 @@ show_menu() {
 }
 
 main() {
-
 	clear
-	
 	gum style --border double --margin "1" --padding "1 2" --border-foreground "2" \
 		"Welcome to the $(gum style --foreground 3 'Confidential Containers Demo')."
 	
