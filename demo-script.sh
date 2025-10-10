@@ -24,10 +24,9 @@ kubectl create -f https://operatorhub.io/install/trustee-operator.yaml
 # Install Trustee Instance
 ## Install KBS Config Map
 kubectl create secret -n operators generic kbs-auth-public-key --from-literal=kbs.pem="$(openssl genpkey -algorithm ed25519)"
-kubectl get secret
-kubectl apply -f https://raw.githubusercontent.com/confidential-containers/trustee-operator/refs/tags/v0.4.0/config/samples/all-in-one/kbs-config.yaml
-kubectl apply -f https://raw.githubusercontent.com/confidential-containers/trustee-operator/refs/tags/v0.4.0/config/samples/all-in-one/rvps-reference-values.yaml
-kubectl apply -f https://raw.githubusercontent.com/confidential-containers/trustee-operator/refs/tags/v0.4.0/config/samples/all-in-one/kbsconfig_sample.yaml
+kubectl apply -f kbs-configmap.yaml
+kubectl apply -f rvps-reference-values-configmap.yaml
+kubectl apply -f kbsconfig-sample.yaml
 
 export KBS_HOST=$(kubectl get nodes -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}')
 export KBS_PORT=$(kubectl get svc "kbs-service" -n "operators" -o jsonpath='{.spec.ports[0].nodePort}')

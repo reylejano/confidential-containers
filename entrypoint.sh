@@ -138,10 +138,12 @@ trustee_instance_installed() {
 
 install_trustee_instance() {
 	gum spin --title "Installing Trustee Instance..." -- sleep 2
-	kubectl create secret -n trustee-system generic kbs-auth-public-key --from-literal=kbs.pem="$(openssl genpkey -algorithm ed25519)"
-	kubectl apply -f https://raw.githubusercontent.com/confidential-containers/trustee-operator/refs/tags/v0.4.0/config/samples/all-in-one/kbs-config.yaml
-	kubectl apply -f https://raw.githubusercontent.com/confidential-containers/trustee-operator/refs/tags/v0.4.0/config/samples/all-in-one/rvps-reference-values.yaml
-	kubectl apply -f https://raw.githubusercontent.com/confidential-containers/trustee-operator/refs/tags/v0.4.0/config/samples/all-in-one/kbsconfig_sample.yaml
+	SECRET=$(openssl genpkey -algorithm ed25519)
+	
+	kubectl create secret -n trustee-system generic kbs-auth-public-key --from-literal=kbs.pem="$SECRET"
+	kubectl apply -f kbs-configmap.yaml
+	kubectl apply -f rvps-reference-values-configmap.yaml
+	kubectl apply -f kbsconfig-sample.yaml
 	while ! quiet_exec kubectl get kbsconfig kbsconfig-sample -n trustee-system; do
 		gum spin --title "Waiting for kbsconfig-sample to be created..." -- sleep 5
 	done
