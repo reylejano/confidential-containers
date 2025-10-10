@@ -82,6 +82,8 @@ install_ccr() {
 		gum spin --title "Waiting for kata-qemu-coco-dev runtimeclass to be created..." -- sleep 5
 	done
 	gum spin --title "kata-qemu-coco-dev runtimeclass created!" -- sleep 2
+	gum spin --title "Checking ContainerD" -- \
+		bash -c "docker exec coco-test-control-plane bash -c 'crictl rmi --prune && systemctl restart containerd'"
 	clear
 }
 
@@ -91,8 +93,6 @@ coco_demo_01() {
 }
 
 install_coco_demo_01() {
-	gum spin --show-output --title "Prune ContainerD Images..." -- \
-		bash -c "docker exec coco-test-control-plane bash -c 'crictl rmi --prune && systemctl restart containerd'"
 	gum spin --show-output --title "Testing Confidential Containers Runtime..." -- \
 		bash -c "kubectl create -f coco-demo-01.yaml"
 	gum spin --title "Waiting for coco-demo-01 to be running..." --timeout 60s -- \
@@ -106,8 +106,6 @@ coco_demo_02() {
 }
 
 install_coco_demo_02() {
-	gum spin --show-output --title "Prune ContainerD Images..." -- \
-		bash -c "docker exec coco-test-control-plane bash -c 'crictl rmi --prune && systemctl restart containerd'"
 	gum spin --show-output --title "Testing Confidential Containers Runtime With Policy..." -- \
 		bash -c "kubectl create -f coco-demo-02.yaml"
 	gum spin --title "Waiting for coco-demo-02 to be running..." --timeout 60s -- \
