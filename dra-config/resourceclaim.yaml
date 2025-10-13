@@ -7,5 +7,4 @@ spec:
    devices:
      requests:
      - name: dra-gpu
-       exactly:
-         deviceClassName: gpu.dra-example.com
+       deviceClassName: gpu.dra-example.com
