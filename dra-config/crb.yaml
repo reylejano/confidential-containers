@@ -5,7 +5,7 @@ metadata:
 subjects:
 - kind: ServiceAccount
   name: dra-example-driver-service-account
-  namespace: coco-dra
+  namespace: dra-tutorial
 roleRef:
   kind: ClusterRole
   name: dra-example-driver-role
