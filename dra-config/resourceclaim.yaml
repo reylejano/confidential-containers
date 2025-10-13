@@ -1,14 +1,11 @@
 apiVersion: resource.k8s.io/v1beta1
 kind: ResourceClaim
 metadata:
- name: rc-draexample-10Gi
+ name: rc-dra-gpu
  namespace: coco-dra
 spec:
    devices:
      requests:
-     - name: gpu-10Gi
+     - name: dra-gpu
        exactly:
          deviceClassName: gpu.dra-example.com
-         selectors:
-         - cel:
-             expression: "device.capacity['gpu.example.com'].memory.compareTo(quantity('10Gi')) >= 0"
