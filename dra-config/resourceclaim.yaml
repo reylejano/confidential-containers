@@ -8,7 +8,7 @@ spec:
      requests:
      - name: gpu-10Gi
        exactly:
-         deviceClassName: gpu.draexample.com
+         deviceClassName: gpu.dra-example.com
          selectors:
          - cel:
              expression: "device.capacity['gpu.example.com'].memory.compareTo(quantity('10Gi')) >= 0"
